@@ -1,0 +1,8 @@
+{
+  "repo_full_name": "scarlett-demo/superset",
+  "issue_number": 101,
+  "issue_title": "Harden cache config parsing in Superset bootstrap",
+  "issue_url": "https://github.com/scarlett-demo/superset/issues/101",
+  "issue_body": "Cache bootstrap accepts unchecked values from local config and lacks a focused regression test. Add validation and a narrow test that proves invalid config is rejected.",
+  "trigger_label": "devin-remediate"
+}

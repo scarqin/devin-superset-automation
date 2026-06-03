@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Devin Superset Automation</title>
+    <style>
+      :root {
+        --bg: #f5f1e8;
+        --card: rgba(255, 252, 246, 0.92);
+        --ink: #1d2a35;
+        --muted: #6b7783;
+        --line: rgba(29, 42, 53, 0.12);
+        --accent: #0d6e6e;
+        --success: #177245;
+        --fail: #ac2e28;
+        --warn: #9f6a00;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", "Helvetica Neue", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(13, 110, 110, 0.18), transparent 36%),
+          linear-gradient(135deg, #f8f4ec, #ece4d5 60%, #f6f1e8);
+      }
+      .shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 20px 60px;
+      }
+      .hero {
+        margin-bottom: 20px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        line-height: 0.95;
+        letter-spacing: -0.04em;
+      }
+      .subtitle {
+        max-width: 820px;
+        color: var(--muted);
+        font-size: 1rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin: 24px 0;
+      }
+      .card, table {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        backdrop-filter: blur(10px);
+      }
+      .card {
+        padding: 18px;
+      }
+      .metric {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-top: 8px;
+      }
+      .label {
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.72rem;
+        color: var(--muted);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+      }
+      th, td {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+        font-size: 0.94rem;
+      }
+      tr:last-child td { border-bottom: 0; }
+      .status {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+      .completed { background: rgba(23, 114, 69, 0.12); color: var(--success); }
+      .failed { background: rgba(172, 46, 40, 0.1); color: var(--fail); }
+      .running, .queued { background: rgba(159, 106, 0, 0.12); color: var(--warn); }
+      .mono {
+        font-family: "SFMono-Regular", Menlo, monospace;
+        font-size: 0.84rem;
+      }
+      a { color: var(--accent); text-decoration: none; }
+      @media (max-width: 700px) {
+        th:nth-child(4), td:nth-child(4),
+        th:nth-child(6), td:nth-child(6) {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <section class="hero">
+        <h1>Devin for Superset<br />Issue Remediation</h1>
+        <div class="subtitle">
+          Event-driven automation that turns labeled GitHub issues into Devin remediation sessions,
+          then tracks execution status, outputs, and engineering throughput.
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="card">
+          <div class="label">Total Jobs</div>
+          <div class="metric">{{ stats.total_jobs }}</div>
+        </div>
+        <div class="card">
+          <div class="label">Active Jobs</div>
+          <div class="metric">{{ stats.active_jobs }}</div>
+        </div>
+        <div class="card">
+          <div class="label">Finished Jobs</div>
+          <div class="metric">{{ stats.finished_jobs }}</div>
+        </div>
+        <div class="card">
+          <div class="label">Success Rate</div>
+          <div class="metric">{{ stats.success_rate }}%</div>
+        </div>
+      </section>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Issue</th>
+            <th>Status</th>
+            <th>Mode</th>
+            <th>Devin</th>
+            <th>Output</th>
+            <th>Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for job in jobs %}
+          <tr>
+            <td>
+              <div><a href="{{ job.issue_url }}">#{{ job.issue_number }} {{ job.issue_title }}</a></div>
+              <div class="mono">{{ job.repo_full_name }}</div>
+            </td>
+            <td><span class="status {{ job.status }}">{{ job.status }}</span></td>
+            <td class="mono">{{ job.mode }}</td>
+            <td class="mono">
+              {% if job.devin_session_id %}
+              <a href="{{ job.devin_url }}">{{ job.devin_session_id }}</a>
+              {% else %}
+              pending
+              {% endif %}
+            </td>
+            <td>
+              {% if job.pr_url %}
+              <a href="{{ job.pr_url }}">PR</a>
+              {% elif job.summary %}
+              {{ job.summary }}
+              {% elif job.failure_reason %}
+              {{ job.failure_reason }}
+              {% else %}
+              -
+              {% endif %}
+            </td>
+            <td class="mono">{{ job.updated_at }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6">No jobs yet. Send a demo event or wire up a GitHub issues webhook.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>
