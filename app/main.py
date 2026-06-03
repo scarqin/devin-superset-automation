@@ -50,6 +50,15 @@ async def api_job(job_id: int) -> dict[str, object]:
     return {"job": job, "events": events}
 
 
+@app.post("/api/jobs/{job_id}/reconcile")
+async def api_job_reconcile(job_id: int) -> dict[str, object]:
+    job = await service.reconcile_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    events = db.list_job_events(job_id)
+    return {"job": job, "events": events}
+
+
 @app.post("/webhooks/github")
 async def github_webhook(request: Request) -> JSONResponse:
     raw = await request.body()

@@ -14,7 +14,23 @@ This project pitches Devin as an autonomous remediation layer for repetitive eng
 The target repository for the take-home is Apache Superset:
 
 - Upstream: `https://github.com/apache/superset`
-- Your fork: `https://github.com/<your-user>/superset`
+- Your fork: `https://github.com/scarqin/superset`
+
+## Proven Outcome
+
+This repository has been validated against a real Superset fork and a real Devin enterprise org.
+
+- Trigger issue: `https://github.com/scarqin/superset/issues/4`
+- Devin session: `https://app.devin.ai/sessions/6eeb7d1340384f08b2248c09a8f1371e`
+- Generated PR: `https://github.com/scarqin/superset/pull/5`
+
+Observed result:
+
+- GitHub issue webhook triggered the automation service
+- The service created a Devin session via the v3 API
+- Devin implemented a bounded code fix in Superset
+- Devin ran targeted validation and returned structured output
+- Devin pushed a branch and opened a PR automatically
 
 ## Architecture
 
@@ -121,6 +137,11 @@ The dashboard and `/api/jobs` answer the core leadership question: "How do I kno
 - PR URLs when produced
 - failure reasons when blocked
 
+For this take-home, the automation recorded both:
+
+- blocked runs caused by missing GitHub write permission
+- a successful end-to-end run after repository access was granted
+
 ## Suggested issues for your fork
 
 See [docs/superset-issue-seeds.md](/Users/scarqin/devin-superset-automation/docs/superset-issue-seeds.md:1) for two bounded issue ideas that fit the take-home scope.
@@ -164,8 +185,8 @@ Extensions:
 ## Known gaps
 
 - GitHub issue comments/status updates are only posted back when `GITHUB_TOKEN` is configured.
-- Real PR creation depends on your Devin org having repo access to your Superset fork.
-- I could not complete live end-to-end verification in this environment because no GitHub auth or Devin API credentials are currently configured.
+- Duplicate issue events are intentionally ignored by `external_id`; if you want to re-run the same issue, create a new issue or add a rerun endpoint/override.
+- The service currently treats `waiting_for_user` plus structured output as terminal so leadership reporting stays accurate, but a richer production workflow would branch into explicit approval / remediation states.
 
 ## Devin API references
 

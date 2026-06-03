@@ -56,13 +56,7 @@ class AutomationService:
                         None if latest.structured_output is None else json.dumps(latest.structured_output)
                     ),
                 )
-                terminal = latest.status in {"exit", "error"} or latest.status_detail in {
-                    "finished",
-                    "error",
-                    "out_of_credits",
-                    "payment_declined",
-                    "usage_limit_exceeded",
-                }
+                terminal = self._is_terminal_session(latest)
                 if terminal:
                     self._finalize_job(job_id, latest)
                     return
@@ -76,6 +70,22 @@ class AutomationService:
                 completed_at=db.utc_now(),
             )
             db.log_event(job_id, "error", "Job failed before completion", {"error": str(exc)})
+
+    def _is_terminal_session(self, latest: Any) -> bool:
+        if latest.status in {"exit", "error"}:
+            return True
+        if latest.status_detail in {
+            "finished",
+            "error",
+            "out_of_credits",
+            "payment_declined",
+            "usage_limit_exceeded",
+        }:
+            return True
+        # Treat structured handoff as terminal for automation observability.
+        if latest.status_detail == "waiting_for_user" and latest.structured_output:
+            return True
+        return False
 
     def _finalize_job(self, job_id: int, latest: Any) -> None:
         output = latest.structured_output or {}
@@ -114,3 +124,20 @@ class AutomationService:
         job = db.get_job(job_id)
         if job:
             asyncio.create_task(post_issue_comment(job))
+
+    async def reconcile_job(self, job_id: int) -> dict[str, Any] | None:
+        job = db.get_job(job_id)
+        if not job or not job.get("devin_session_id"):
+            return job
+        latest = await self.devin.get_session(job["devin_session_id"])
+        db.update_job(
+            job_id,
+            devin_status=latest.status,
+            devin_status_detail=latest.status_detail,
+            structured_output_json=(
+                None if latest.structured_output is None else json.dumps(latest.structured_output)
+            ),
+        )
+        if self._is_terminal_session(latest):
+            self._finalize_job(job_id, latest)
+        return db.get_job(job_id)
